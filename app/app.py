@@ -1,12 +1,14 @@
 import re
 import html
+from pathlib import Path
 
 import joblib
 import pandas as pd
 import streamlit as st
 from sentence_transformers import SentenceTransformer
 
-MODEL_DIR = "models"
+# models folder is next to the app folder
+MODEL_DIR = Path(__file__).resolve().parent.parent / "models"
 EMB_MODEL = "all-MiniLM-L6-v2"
 
 st.set_page_config(page_title="News Topic Classifier", page_icon="📰", layout="centered")
@@ -26,7 +28,7 @@ def clean_text(text):
 # Load the two trained models once
 @st.cache_resource
 def load_models():
-    tfidf = joblib.load(f"{MODEL_DIR}/tfidf_svm.joblib")
+    tfidf = joblib.load(f"{MODEL_DIR}/tfidf_lr.joblib")
     emb_clf = joblib.load(f"{MODEL_DIR}/emb_mlp.joblib")
     encoder = SentenceTransformer(EMB_MODEL)
     return tfidf, emb_clf, encoder
@@ -39,7 +41,7 @@ def predict(text, tfidf, emb_clf, encoder):
     emb = encoder.encode([text], normalize_embeddings=True)
     p2 = emb_clf.predict_proba(emb)[0]
     return pd.DataFrame({
-        "TF-IDF + SVM": pd.Series(p1, index=tfidf.classes_),
+        "TF-IDF + LR": pd.Series(p1, index=tfidf.classes_),
         "Embeddings + MLP": pd.Series(p2, index=emb_clf.classes_),
     })
 
@@ -51,7 +53,7 @@ st.write("Type a short news headline and the models will guess the topic: "
 try:
     tfidf, emb_clf, encoder = load_models()
 except FileNotFoundError:
-    st.error("Models not found. Run `tfidf.ipynb` and `embeddings.ipynb` first.")
+    st.error("Models not found. Run the notebooks in the `notebooks` folder first.")
     st.stop()
 
 text = st.text_input("Headline", placeholder="e.g. Stocks fall as inflation rises")
@@ -68,5 +70,5 @@ if st.button("Classify", type="primary"):
         st.subheader("Probabilities")
         st.bar_chart(probs, stack=False)
 
-        if probs["TF-IDF + SVM"].idxmax() != probs["Embeddings + MLP"].idxmax():
+        if probs["TF-IDF + LR"].idxmax() != probs["Embeddings + MLP"].idxmax():
             st.info("The two models do not agree on this headline.")

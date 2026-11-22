@@ -1,7 +1,4 @@
-# Data files (too big for GitHub)
 data/*.csv
 data/*.npy
-
-# Python cache
 __pycache__/
 .ipynb_checkpoints/
