@@ -1,4 +1,6 @@
-data/*.csv
-data/*.npy
+# Data files (too big for GitHub, see README for download steps)
+data/
+
+# Python cache
 __pycache__/
 .ipynb_checkpoints/
